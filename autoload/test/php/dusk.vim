@@ -10,7 +10,7 @@ endfunction
 function! test#php#dusk#build_position(type, position) abort
   if a:type ==# 'nearest'
     let name = s:nearest_test(a:position)
-    if !empty(name) | let name = '--filter '.shellescape(name, 1) | endif
+    if !empty(name) | let name = '--filter '.shellescape('::' . name . '$', 1) | endif
     return [name, a:position['file']]
   elseif a:type ==# 'file'
     return [a:position['file']]
@@ -19,10 +19,10 @@ function! test#php#dusk#build_position(type, position) abort
   endif
 endfunction
 
-function! test#php#dusk#build_args(args) abort
+function! test#php#dusk#build_args(args, color) abort
   let args = a:args
 
-  if !test#base#no_colors()
+  if a:color
     let args = ['--colors'] + args
   endif
 

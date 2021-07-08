@@ -36,6 +36,29 @@ function! test#strategy#asyncrun(cmd) abort
   execute 'AsyncRun '.a:cmd
 endfunction
 
+function! test#strategy#asyncrun_setup_unlet_global_autocmd() abort
+  if !exists('#asyncrun_background#User#AsynRunStop')
+    augroup asyncrun_background
+      autocmd!
+      autocmd User AsyncRunStop if exists('g:test#strategy#cmd') | unlet g:test#strategy#cmd | endif
+    augroup END
+  endif
+endfunction
+
+function! test#strategy#asyncrun_background(cmd) abort
+  let g:test#strategy#cmd = a:cmd
+  call test#strategy#asyncrun_setup_unlet_global_autocmd()
+  execute 'AsyncRun -mode=async -silent -post=echo\ eval("g:asyncrun_code\ ?\"Failure\":\"Success\"").":"'
+          \ .'\ substitute(g:test\#strategy\#cmd,\ "\\",\ "",\ "") '.a:cmd
+endfunction
+
+function! test#strategy#asyncrun_background_term(cmd) abort
+  let g:test#strategy#cmd = a:cmd
+  call test#strategy#asyncrun_setup_unlet_global_autocmd()
+  execute 'AsyncRun -mode=term -pos=tab -focus=0 -post=echo\ eval("g:asyncrun_code\ ?\"Failure\":\"Success\"").":"'
+          \ .'\ substitute(g:test\#strategy\#cmd,\ "\\",\ "",\ "") '.a:cmd
+endfunction
+
 function! test#strategy#dispatch(cmd) abort
   execute 'Dispatch '.a:cmd
 endfunction
@@ -70,16 +93,18 @@ function! test#strategy#neoterm(cmd) abort
   call neoterm#do({ 'cmd': a:cmd})
 endfunction
 
+function! test#strategy#floaterm(cmd) abort
+  execute 'FloatermNew --autoclose=0 '.a:cmd
+endfunction
+
 function! test#strategy#vtr(cmd) abort
   call VtrSendCommand(s:pretty_command(a:cmd), 1)
 endfunction
 
 function! test#strategy#vimux(cmd) abort
   if exists('g:test#preserve_screen') && !g:test#preserve_screen
-    if exists('g:VimuxRunnerIndex') && _VimuxHasRunner(g:VimuxRunnerIndex) != -1
-      call VimuxRunCommand(!s:Windows() ? 'clear' : 'cls')
-      call VimuxClearRunnerHistory()
-    endif
+    call VimuxClearTerminalScreen()
+    call VimuxClearRunnerHistory()
     call VimuxRunCommand(s:command(a:cmd))
   else
     call VimuxRunCommand(s:pretty_command(a:cmd))
@@ -88,6 +113,28 @@ endfunction
 
 function! test#strategy#tslime(cmd) abort
   call Send_to_Tmux(s:pretty_command(a:cmd)."\n")
+endfunction
+
+function! test#strategy#slimux(cmd) abort
+  if exists('g:test#preserve_screen') && !g:test#preserve_screen
+    call SlimuxSendCommand(s:pretty_command(a:cmd))
+  else
+    call SlimuxSendCommand(s:command(a:cmd))
+  endif
+endfunction
+
+function! test#strategy#tmuxify(cmd) abort
+  call tmuxify#pane_send_raw('C-u', '!')
+  call tmuxify#pane_send_raw('q', '!')
+  call tmuxify#pane_send_raw('C-u', '!')
+
+  if exists('g:test#preserve_screen') && !g:test#preserve_screen
+    call tmuxify#pane_send_raw('C-u', '!')
+    call tmuxify#pane_send_raw('C-l', '!')
+    call tmuxify#pane_send_raw('C-u', '!')
+  endif
+
+  call tmuxify#pane_run('!', s:command(a:cmd))
 endfunction
 
 function! test#strategy#vimshell(cmd) abort
@@ -107,6 +154,15 @@ endfunction
 function! test#strategy#kitty(cmd) abort
   let cmd = join(['cd ' . shellescape(getcwd()), s:pretty_command(a:cmd)], '; ')
   call s:execute_script('kitty_runner', cmd)
+endfunction
+
+function! test#strategy#shtuff(cmd) abort
+  if !exists('g:shtuff_receiver')
+    echoerr 'You must define g:shtuff_receiver to use this strategy'
+    return
+  endif
+
+  call system("shtuff into " . shellescape(g:shtuff_receiver) . " " . shellescape("clear;" . a:cmd))
 endfunction
 
 function! s:execute_with_compiler(cmd, script) abort
@@ -138,20 +194,25 @@ endfunction
 
 function! s:execute_script(name, cmd) abort
   let script_path = g:test#plugin_path . '/bin/' . a:name
-  let cmd = join([script_path, shellescape(a:cmd)])
+  let cmd = join([shellescape(script_path), shellescape(a:cmd)])
   execute 'silent !'.cmd
 endfunction
 
 function! s:pretty_command(cmd) abort
-  let clear = !s:Windows() ? 'clear' : 'cls'
-  let echo  = !s:Windows() ? 'echo -e '.shellescape(a:cmd) : 'Echo '.shellescape(a:cmd)
+  let cmds = []
   let separator = !s:Windows() ? '; ' : ' & '
 
   if !get(g:, 'test#preserve_screen')
-    return join([l:clear, l:echo, a:cmd], l:separator)
-  else
-    return join([l:echo, a:cmd], l:separator)
+    call add(l:cmds, !s:Windows() ? 'clear' : 'cls')
   endif
+
+  if get(g:, 'test#echo_command', 1)
+    call add(l:cmds, !s:Windows() ? 'echo -e '.shellescape(a:cmd) : 'Echo '.shellescape(a:cmd))
+  endif
+
+  call add(l:cmds, a:cmd)
+
+  return join(l:cmds, l:separator)
 endfunction
 
 function! s:command(cmd) abort

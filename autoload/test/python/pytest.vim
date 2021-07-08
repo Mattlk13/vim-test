@@ -27,10 +27,10 @@ function! test#python#pytest#build_position(type, position) abort
   endif
 endfunction
 
-function! test#python#pytest#build_args(args) abort
+function! test#python#pytest#build_args(args, color) abort
   let args = a:args
 
-  if test#base#no_colors()
+  if !a:color
     let args = ['--color=no'] + args
   endif
 
@@ -42,6 +42,8 @@ function! test#python#pytest#executable() abort
 
   if filereadable("Pipfile")
     let pipenv_prefix = "pipenv run "
+  elseif filereadable("poetry.lock")
+    let pipenv_prefix = "poetry run "
   endif
 
   if executable("py.test") && !executable("pytest")

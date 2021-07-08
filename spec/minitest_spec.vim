@@ -28,6 +28,21 @@ describe "Minitest"
 
       Expect g:test#last_command == 'rake test TEST="classic_unit_test.rb" TESTOPTS="--name=''/Math::TestNumbers\#test_method$/''"'
 
+      view +3 test_classic.rb
+      TestNearest
+
+      Expect g:test#last_command == 'rake test TEST="test_classic.rb" TESTOPTS="--name=''/Math/''"'
+
+      view +4 test_classic.rb
+      TestNearest
+
+      Expect g:test#last_command == 'rake test TEST="test_classic.rb" TESTOPTS="--name=''/Math::TestOperators/''"'
+
+      view +6 test_classic.rb
+      TestNearest
+
+      Expect g:test#last_command == 'rake test TEST="test_classic.rb" TESTOPTS="--name=''/Math::TestOperators\#test_addition$/''"'
+
       view +11 rails_unit_test.rb
       TestNearest
 
@@ -141,26 +156,33 @@ describe "Minitest"
     view unit_test.rb
     TestSuite
 
-    Expect g:test#last_command == 'rake test TEST="test/**/*_test.rb"'
+    Expect g:test#last_command == 'rake test TEST="test/**/{test_*,*_test}.rb"'
   end
 
   it "runs folders recursively"
     view unit_test.rb
     Minitest .
 
-    Expect g:test#last_command == 'rake test TEST="**/*_test.rb"'
+    Expect g:test#last_command == 'rake test TEST="**/{test_*,*_test}.rb"'
   end
 
   it "switches to reliable option passing"
     view unit_test.rb
     Minitest --name /some_regex/
 
-    Expect g:test#last_command == 'rake test TEST="test/**/*_test.rb" TESTOPTS="--name=''/some_regex/''"'
+    Expect g:test#last_command == 'rake test TEST="test/**/{test_*,*_test}.rb" TESTOPTS="--name=''/some_regex/''"'
 
     view unit_test.rb
     Minitest --seed 1234
 
-    Expect g:test#last_command == 'rake test TEST="test/**/*_test.rb" TESTOPTS="--seed=''1234''"'
+    Expect g:test#last_command == 'rake test TEST="test/**/{test_*,*_test}.rb" TESTOPTS="--seed=''1234''"'
+  end
+
+  it "does not pick up RSpec files that start with 'test'"
+    view test_spec.rb
+    TestFile
+
+    Expect g:test#last_command == 'rspec test_spec.rb'
   end
 
 end

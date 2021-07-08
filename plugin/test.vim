@@ -6,26 +6,29 @@ let g:loaded_test = 1
 let g:test#plugin_path = expand('<sfile>:p:h:h')
 
 let g:test#default_runners = {
-  \ 'Ruby':       ['Rails', 'M', 'Minitest', 'RSpec', 'Cucumber'],
-  \ 'JavaScript': ['Ava', 'CucumberJS', 'Intern', 'TAP', 'Karma', 'Lab', 'Mocha', 'Jasmine', 'Jest', 'ReactScripts', 'WebdriverIO'],
-  \ 'Python':     ['DjangoTest', 'PyTest', 'PyUnit', 'Nose', 'Nose2'],
+  \ 'CSharp':     ['Xunit', 'DotnetTest'],
+  \ 'Clojure':    ['FireplaceTest'],
+  \ 'Crystal':    ['CrystalSpec'],
+  \ 'Dart':       ['DartTest', 'FlutterTest'],
   \ 'Elixir':     ['ExUnit', 'ESpec'],
   \ 'Elm':        ['ElmTest'],
-  \ 'Erlang':     ['CommonTest'],
-  \ 'Go':         ['GoTest', 'Ginkgo', 'RichGo'],
+  \ 'Erlang':     ['CommonTest', 'EUnit'],
+  \ 'Go':         ['GoTest', 'Ginkgo', 'RichGo', 'Delve'],
+  \ 'Haskell':    ['StackTest'],
+  \ 'Java':       ['MavenTest', 'GradleTest'],
+  \ 'JavaScript': ['Ava', 'CucumberJS', 'DenoTest', 'Intern', 'TAP', 'Karma', 'Lab', 'Mocha',  'NgTest', 'Jasmine', 'Jest', 'ReactScripts', 'WebdriverIO', 'Cypress'],
+  \ 'Kotlin':     ['GradleTest'],
+  \ 'Lua':        ['Busted'],
+  \ 'PHP':        ['Codeception', 'Dusk', 'Pest', 'PHPUnit', 'Behat', 'PHPSpec', 'Kahlan', 'Peridot'],
+  \ 'Perl':       ['Prove'],
+  \ 'Python':     ['Behave', 'DjangoTest', 'PyTest', 'PyUnit', 'Nose', 'Nose2', 'Mamba'],
+  \ 'Racket':     ['RackUnit'],
+  \ 'Ruby':       ['Rails', 'M', 'Minitest', 'RSpec', 'Cucumber', 'TestBench'],
   \ 'Rust':       ['CargoTest'],
-  \ 'Clojure':    ['FireplaceTest'],
-  \ 'CSharp':     ['Xunit', 'DotnetTest'],
+  \ 'Scala':      ['SbtTest', 'BloopTest'],
   \ 'Shell':      ['Bats'],
   \ 'Swift':      ['SwiftPM'],
-  \ 'VimL':       ['Themis', 'VSpec', 'Vader'],
-  \ 'Lua':        ['Busted'],
-  \ 'PHP':        ['Codeception', 'Dusk', 'PHPUnit', 'Behat', 'PHPSpec', 'Kahlan', 'Peridot'],
-  \ 'Perl':       ['Prove'],
-  \ 'Racket':     ['RackUnit'],
-  \ 'Java':       ['MavenTest', 'GradleTest'],
-  \ 'Scala':      ['SbtTest'],
-  \ 'Crystal':    ['CrystalSpec'],
+  \ 'VimL':       ['Themis', 'VSpec', 'Vader', 'Testify', 'Vroom'],
 \}
 
 let g:test#custom_strategies = get(g:, 'test#custom_strategies', {})
@@ -33,7 +36,8 @@ let g:test#custom_transformations = get(g:, 'test#custom_transformations', {})
 let g:test#runner_commands = get(g:, 'test#runner_commands', [])
 
 command! -nargs=* -bar TestNearest call test#run('nearest', split(<q-args>))
-command! -nargs=* -bar TestFile    call test#run('file', split(<q-args>))
+command! -nargs=* -bar -complete=file
+      \                TestFile    call test#run('file', split(<q-args>))
 command! -nargs=* -bar TestSuite   call test#run('suite', split(<q-args>))
 command! -nargs=* -bar TestLast    call test#run_last(split(<q-args>))
 command!          -bar TestVisit   call test#visit()

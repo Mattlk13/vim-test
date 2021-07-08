@@ -13,7 +13,7 @@ function! test#php#codeception#build_position(type, position) abort
   if a:type ==# 'nearest'
     let testname = s:nearest_test(a:position)
     let filename = a:position['file']
-    if !empty(testname) | let filename .= ':' . testname | endif
+    if !empty(testname) | let filename .= '::' . testname . '$' | endif
     return [filename]
   elseif a:type ==# 'file'
     return [a:position['file']]
@@ -22,10 +22,10 @@ function! test#php#codeception#build_position(type, position) abort
   endif
 endfunction
 
-function! test#php#codeception#build_args(args) abort
+function! test#php#codeception#build_args(args, color) abort
   let args = a:args
 
-  if test#base#no_colors()
+  if !a:color
     let args = ['--no-ansi'] + args
   endif
 
